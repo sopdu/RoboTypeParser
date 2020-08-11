@@ -1,6 +1,18 @@
 <?php
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.php");
 class parserRobotyre{
+    public function Log($data, $title = ''){
+        define('DEBUG_FILE_NAME', date('Y-m-d').'.log');
+        if(!DEBUG_FILE_NAME){ return false; }
+        $log = "\n------------------------\n";
+        $log .= date("Y.m.d G:i:s")."\n";
+        #$log .= $this->GetUser()."\n";
+        $log .= (strlen($title) > 0 ? $title : 'DEBUG')."\n";
+        $log .= print_r($data, 1);
+        $log .= "\n------------------------\n";
+        file_put_contents(__DIR__."/".DEBUG_FILE_NAME, $log, FILE_APPEND);
+        return;
+    }
     public function dump($value){
         $filePath = $_SERVER["DOCUMENT_ROOT"].'/crm-robotyre/ils/ilsDump.txt';
         $file = fopen($filePath, "w");
@@ -250,6 +262,23 @@ class parserRobotyre{
         }
         return $result;
     }
+    private function getProperty($type, $propertyCode){
+        if($type == 'tire'){
+            $iblock = 2;
+        } else {
+            $iblock = 3;
+        }
+        $zapros = CIBlockPropertyEnum::GetList(
+            [
+                "IBLOCK_ID" =>  $iblock,
+                "CODE"      =>  $propertyCode
+            ]
+        );
+        while ($row = $zapros->Fetch()){
+            $result[$row["VALUE"]] = $row["ID"];
+        }
+        return $result;
+    }
     private function updateItem($type, $data){
         $element = new CIBlockElement;
         $product = new CCatalogProduct();
@@ -293,6 +322,7 @@ class parserRobotyre{
                     "PROPERTY_VALUES" => $propertyArray
                 ]
             );
+            $this->Log($itemSite["ID"], 'изменен товар в '.date('d-m-Y H:i:s'));
         }
         return;
     }
