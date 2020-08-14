@@ -1,6 +1,15 @@
 <?php
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.php");
+
+/**
+ * Class parserRobotyre
+ */
 class parserRobotyre{
+    /**
+     * @param $data
+     * @param string $title
+     * @return false|void
+     */
     public function Log($data, $title = ''){
         define('DEBUG_FILE_NAME', date('Y-m-d').'.log');
         if(!DEBUG_FILE_NAME){ return false; }
@@ -13,6 +22,10 @@ class parserRobotyre{
         file_put_contents(__DIR__."/".DEBUG_FILE_NAME, $log, FILE_APPEND);
         return;
     }
+
+    /**
+     * @param $value
+     */
     public function dump($value){
         $filePath = $_SERVER["DOCUMENT_ROOT"].'/crm-robotyre/ils/ilsDump.txt';
         $file = fopen($filePath, "w");
@@ -20,6 +33,10 @@ class parserRobotyre{
         #fclose();
         return;
     }
+
+    /**
+     *
+     */
     private function tableDB(){
         global $DB;
         if(empty($DB->Query("SHOW TABLES LIKE 'ils_setting'")->Fetch())){
@@ -32,6 +49,10 @@ class parserRobotyre{
         }
         return;
     }
+
+    /**
+     * @param $zaprosId
+     */
     private function tableAddId($zaprosId){
         global $DB;
         $DB->Query("
@@ -39,18 +60,33 @@ class parserRobotyre{
         ");
         return;
     }
+
+    /**
+     * @return mixed
+     */
     private function tableGetId(){
         global $DB;
         return $DB->Query("
             select value from ils_setting where param = 'robotare_zapros'
         ")->Fetch()["value"];
     }
+
+    /**
+     *
+     */
     private function tableDropId(){
         global $DB;
         $DB->Query("
             delete from ils_setting where param = 'robotare_zapros'
         ");
     }
+
+    /**
+     * @param $method
+     * @param string $param
+     * @param $return
+     * @return mixed
+     */
     private function requerstKey($method, $param = '', $return){
         $url = 'https://crm.robotyre.ru/api/'.$method.'/';
         $ch = curl_init($url);
@@ -68,6 +104,10 @@ class parserRobotyre{
             return $result[$return];
         }
     }
+
+    /**
+     * @return mixed
+     */
     private function getKey(){
         return $this->requerstKey(
             'Authorization',
@@ -78,6 +118,12 @@ class parserRobotyre{
             'token'
         );
     }
+
+    /**
+     * @param $method
+     * @param $param
+     * @return mixed
+     */
     private function requerst($method, $param){
         $url = 'https://crm.robotyre.ru/api/'.$method;
         $options = [
@@ -91,6 +137,10 @@ class parserRobotyre{
         $result = file_get_contents($url, false, $context);
         return json_decode($result, true);
     }
+
+    /**
+     *
+     */
     private function createZapros(){
         return $this->tableAddId(
             $this->requerst(
@@ -103,6 +153,10 @@ class parserRobotyre{
             )["id"]
         );
     }
+
+    /**
+     * @return mixed
+     */
     private function getItems(){
         $zapros = $this->requerst(
             'GetRequestResult',
@@ -117,6 +171,12 @@ class parserRobotyre{
         }
         return$zapros;
     }
+
+    /**
+     * @param $type
+     * @param $robotyre_id
+     * @return array
+     */
     private function getItem($type, $robotyre_id){
         if($type == 'tire'){
             $iblock = [2, 10];
@@ -262,6 +322,12 @@ class parserRobotyre{
         }
         return $result;
     }
+
+    /**
+     * @param $type
+     * @param $propertyCode
+     * @return mixed
+     */
     private function getProperty($type, $propertyCode){
         if($type == 'tire'){
             $iblock = 2;
@@ -279,6 +345,11 @@ class parserRobotyre{
         }
         return $result;
     }
+
+    /**
+     * @param $type
+     * @param $data
+     */
     private function updateItem($type, $data){
         $element = new CIBlockElement;
         $product = new CCatalogProduct();
@@ -326,10 +397,15 @@ class parserRobotyre{
         }
         return;
     }
+
+    /**
+     *
+     */
     public function main(){
         foreach ($this->getItems()["products"]["tires"]["tire"] as $tire){
+            //echo '<pre>'; print_r($tire); '</pre>';
             //if($tire["@id"] == 111341){
-                $this->updateItem('tire', $tire);
+                //$this->updateItem('tire', $tire);
             //}
         }
         /*
