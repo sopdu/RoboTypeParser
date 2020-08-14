@@ -1,4 +1,8 @@
 <?php
+ini_set('error_reporting', E_ALL);
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.php");
 
 /**
@@ -79,6 +83,17 @@ class parserRobotyre{
         $DB->Query("
             delete from ils_setting where param = 'robotare_zapros'
         ");
+    }
+
+    /**
+     *
+     */
+    private function tableAddTime(){
+        global $DB;
+        $DB->Query("
+            insert into ils_setting (param, value) value ('start', 'NOW()')
+        ");
+        return;
     }
 
     /**
@@ -402,12 +417,15 @@ class parserRobotyre{
      *
      */
     public function main(){
-        foreach ($this->getItems()["products"]["tires"]["tire"] as $tire){
+        $this->tableAddTime();
+
+
+        //foreach ($this->getItems()["products"]["tires"]["tire"] as $tire){
             //echo '<pre>'; print_r($tire); '</pre>';
             //if($tire["@id"] == 111341){
                 //$this->updateItem('tire', $tire);
             //}
-        }
+       // }
         /*
         foreach ($this->getItems()["products"]["disks"]["disk"] as $disk){
 
