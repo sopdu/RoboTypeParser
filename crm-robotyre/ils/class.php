@@ -55,62 +55,36 @@ class parserRobotyre{
     }
 
     /**
-     * @param $zaprosId
+     * @param $param
+     * @param $value
+     * @return CDBResult|false
      */
-    private function tableAddId($zaprosId){
+    private function tableAdd($param, $value){
         global $DB;
         return $DB->Query("
-            insert into ils_setting (param, value) value ('robotare_zapros', '".$zaprosId."')
+            insert into ils_setting (param, value) value ('".$param."', '".$value."')
         ");
     }
 
     /**
-     * @return mixed
+     * @param $param
+     * @return CDBResult|false
      */
-    private function tableGetId(){
+    private function tableGet($param){
         global $DB;
         return $DB->Query("
-            select value from ils_setting where param = 'robotare_zapros'
+            select value from ils_setting where param = '".$param."'
         ")->Fetch()["value"];
     }
 
     /**
+     * @param $param
      * @return CDBResult|false
      */
-    private function tableDropId(){
+    private function tableDrop($param){
         global $DB;
         return $DB->Query("
-            delete from ils_setting where param = 'robotare_zapros'
-        ");
-    }
-
-    /**
-     * @return CDBResult|false
-     */
-    private function tableAddTime(){
-        global $DB;
-        return $DB->Query("
-            insert into ils_setting (param, value) value ('start', NOW())
-        ");
-    }
-
-    /**
-     * @return mixed
-     */
-    private function tableGetTime(){
-        global $DB;
-        return $DB->Query("
-            select value from ils_setting where param = 'strat'
-        ")->Fetch()["value"];
-    }
-
-    /**
-     * @return CDBResult|false
-     */
-    private function tableDropTime(){
-        global $DB;
-        return $DB->Query("
-            delete from ils_setting where param = 'start'
+            delete from ils_setting where param = '".$param."'
         ");
     }
 
