@@ -61,9 +61,15 @@ class parserRobotyre{
      */
     private function tableAdd($param, $value){
         global $DB;
-        return $DB->Query("
-            insert into ils_setting (param, value) value ('".$param."', '".$value."')
-        ");
+        if($value == 'NOW()'){
+            return $DB->Query("
+                insert into ils_setting (param, value) value ('".$param."', NOW())
+            ");
+        } else {
+            return $DB->Query("
+                insert into ils_setting (param, value) value ('".$param."', '".$value."')
+            ");
+        }
     }
 
     /**
@@ -409,7 +415,8 @@ class parserRobotyre{
      *
      */
     public function main(){
-        $this->tableAddTime();
+        $this->tableDrop('start');
+        //$this->tableAdd('start', 'NOW()');
 
 
         //foreach ($this->getItems()["products"]["tires"]["tire"] as $tire){
