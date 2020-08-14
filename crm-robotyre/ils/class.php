@@ -59,10 +59,9 @@ class parserRobotyre{
      */
     private function tableAddId($zaprosId){
         global $DB;
-        $DB->Query("
+        return $DB->Query("
             insert into ils_setting (param, value) value ('robotare_zapros', '".$zaprosId."')
         ");
-        return;
     }
 
     /**
@@ -76,24 +75,43 @@ class parserRobotyre{
     }
 
     /**
-     *
+     * @return CDBResult|false
      */
     private function tableDropId(){
         global $DB;
-        $DB->Query("
+        return $DB->Query("
             delete from ils_setting where param = 'robotare_zapros'
         ");
     }
 
     /**
-     *
+     * @return CDBResult|false
      */
     private function tableAddTime(){
         global $DB;
-        $DB->Query("
-            insert into ils_setting (param, value) value ('start', 'NOW()')
+        return $DB->Query("
+            insert into ils_setting (param, value) value ('start', NOW())
         ");
-        return;
+    }
+
+    /**
+     * @return mixed
+     */
+    private function tableGetTime(){
+        global $DB;
+        return $DB->Query("
+            select value from ils_setting where param = 'strat'
+        ")->Fetch()["value"];
+    }
+
+    /**
+     * @return CDBResult|false
+     */
+    private function tableDropTime(){
+        global $DB;
+        return $DB->Query("
+            delete from ils_setting where param = 'start'
+        ");
     }
 
     /**
@@ -431,6 +449,7 @@ class parserRobotyre{
 
         }
         */
+        echo 'main test';
         return;
     }
 }
