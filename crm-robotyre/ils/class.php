@@ -61,9 +61,15 @@ class parserRobotyre{
      */
     private function tableAdd($param, $value){
         global $DB;
-        return $DB->Query("
-            insert into ils_setting (param, value) value ('".$param."', '".$value."')
-        ");
+        if($value == 'NOW()'){
+            return $DB->Query("
+                insert into ils_setting (param, value) value ('".$param."', NOW())
+            ");
+        } else {
+            return $DB->Query("
+                insert into ils_setting (param, value) value ('".$param."', '".$value."')
+            ");
+        }
     }
 
     /**
@@ -149,7 +155,8 @@ class parserRobotyre{
      *
      */
     private function createZapros(){
-        return $this->tableAddId(
+        return $this->tableAdd(
+            'robotare_zapros',
             $this->requerst(
                 'GetProducts',
                 [
@@ -169,7 +176,7 @@ class parserRobotyre{
             'GetRequestResult',
             [
                 "token" =>  $this->getKey(),
-                "id"    =>  $this->tableGetId()
+                "id"    =>  $this->tableGet('robotare_zapros')
             ]
         );
         if($zapros["message"] == 'Запрос в обработке'){
@@ -177,6 +184,29 @@ class parserRobotyre{
             $this->getItem();
         }
         return$zapros;
+    }
+
+    /**
+     * @param $type
+     * @param $propertyCode
+     * @return mixed
+     */
+    private function getProperty($type, $propertyCode){
+        if($type == 'tire'){
+            $iblock = [2, 10];
+        } else {
+            $iblock = 3;
+        }
+        $zapros = CIBlockPropertyEnum::GetList(
+            [
+                "IBLOCK_ID" =>  $iblock,
+                "CODE"      =>  $propertyCode
+            ]
+        );
+        while ($row = $zapros->Fetch()){
+            $result[$row["VALUE"]] = $row["ID"];
+        }
+        return $result;
     }
 
     /**
@@ -264,30 +294,30 @@ class parserRobotyre{
                     "ACTIVE"            =>  $row["ACTIVE"],
                     "DETAIL_PICTURE"    =>  $row["DETAIL_PICTURE"],
                     "PROPERTY"          =>  [
-                        "BRAND"         =>  $row["PROPERTY_BRAND_VALUE"],
-                        "WIDTH"         =>  $row["PROPERTY_WIDTH_VALUE"],
+                        "BRAND"         =>  $this->getProperty($type, $row["PROPERTY_BRAND_VALUE"]),
+                        "WIDTH"         =>  $this->getProperty($type, $row["PROPERTY_WIDTH_VALUE"]),
                         "STOCK"         =>  $row["PROPERTY_STOCK_VALUE"],
                         "DELETE"        =>  $row["PROPERTY_DELETE_VALUE"],
-                        "MIIIX_ID"      =>  $row["PROPERTY_MIIIX_ID_VALUE"],
-                        "STUD"          =>  $row["PROPERTY_STUD_VALUE"],
+                        "MIIIX_ID"      =>  $this->getProperty($type, $row["PROPERTY_MIIIX_ID_VALUE"]),
+                        "STUD"          =>  $this->getProperty($type, $row["PROPERTY_STUD_VALUE"]),
                         "AVAILABLE"     =>  $row["PROPERTY_AVAILABLE_VALUE"],
                         "SHORT_NAME"    =>  $row["PROPERTY_SHORT_NAME_VALUE"],
-                        "HOMOLOGATION"  =>  $row["PROPERTY_HOMOLOGATION_VALUE"],
+                        "HOMOLOGATION"  =>  $this->getProperty($type, $row["PROPERTY_HOMOLOGATION_VALUE"]),
                         "STOCK_CITY"    =>  $row["PROPERTY_STOCK_CITY_VALUE"],
                         "DELIVERY_DAY"  =>  $row["PROPERTY_DELIVERY_DAY_VALUE"],
                         "AVITO_TEXT"    =>  $row["PROPERTY_AVITO_TEXT_VALUE"],
-                        "HEIGHT"        =>  $row["PROPERTY_HEIGHT_VALUE"],
-                        "DIAMETR"       =>  $row["PROPERTY_DIAMETR_VALUE"],
-                        "SEASON"        =>  $row["PROPERTY_SEASON_VALUE"],
-                        "RUN_FLAT"      =>  $row["PROPERTY_RUN_FLAT_VALUE"],
-                        "SPEED_INDEX"   =>  $row["PROPERTY_SPEED_INDEX_VALUE"],
-                        "LOAD_INDEX"    =>  $row["PROPERTY_LOAD_INDEX_VALUE"],
-                        "TYPE_AUTO"     =>  $row["PROPERTY_TYPE_AUTO_VALUE"],
+                        "HEIGHT"        =>  $this->getProperty($type, $row["PROPERTY_HEIGHT_VALUE"]),
+                        "DIAMETR"       =>  $this->getProperty($type, $row["PROPERTY_DIAMETR_VALUE"]),
+                        "SEASON"        =>  $this->getProperty($type, $row["PROPERTY_SEASON_VALUE"]),
+                        "RUN_FLAT"      =>  $this->getProperty($type, $row["PROPERTY_RUN_FLAT_VALUE"]),
+                        "SPEED_INDEX"   =>  $this->getProperty($type, $row["PROPERTY_SPEED_INDEX_VALUE"]),
+                        "LOAD_INDEX"    =>  $this->getProperty($type, $row["PROPERTY_LOAD_INDEX_VALUE"]),
+                        "TYPE_AUTO"     =>  $this->getProperty($type, $row["PROPERTY_TYPE_AUTO_VALUE"]),
                         "ROBOTYRE"      =>  $row["PROPERTY_ROBOTYRE_VALUE"],
-                        "C"             =>  $row["PROPERTY_C_VALUE"],
+                        "C"             =>  $this->getProperty($type, $row["PROPERTY_C_VALUE"]),
                         "STATUS"        =>  $row["PROPERTY_STATUS_VALUE"],
-                        "AXIS"          =>  $row["PROPERTY_AXIS_VALUE"],
-                        "UPDATE"        =>  $row["PROPERTY_UPDATE_VALUE"],
+                        "AXIS"          =>  $this->getProperty($type, $row["PROPERTY_AXIS_VALUE"]),
+                        "UPDATE"        =>  $this->getProperty($type, $row["PROPERTY_UPDATE_VALUE"]),
                         "MODEL"         =>  $row["PROPERTY_MODEL_VALUE"],
                         "CODE_PROVIDER" =>  $row["PROPERTY_CODE_PROVIDER_VALUE"],
                         "MARK_UP_ID"    =>  $row["PROPERTY_MARK_UP_ID_VALUE"],
@@ -326,29 +356,6 @@ class parserRobotyre{
                     ]
                 ];
             }
-        }
-        return $result;
-    }
-
-    /**
-     * @param $type
-     * @param $propertyCode
-     * @return mixed
-     */
-    private function getProperty($type, $propertyCode){
-        if($type == 'tire'){
-            $iblock = 2;
-        } else {
-            $iblock = 3;
-        }
-        $zapros = CIBlockPropertyEnum::GetList(
-            [
-                "IBLOCK_ID" =>  $iblock,
-                "CODE"      =>  $propertyCode
-            ]
-        );
-        while ($row = $zapros->Fetch()){
-            $result[$row["VALUE"]] = $row["ID"];
         }
         return $result;
     }
@@ -409,7 +416,8 @@ class parserRobotyre{
      *
      */
     public function main(){
-        $this->tableAddTime();
+        $this->tableDrop('start');
+        //$this->tableAdd('start', 'NOW()');
 
 
         //foreach ($this->getItems()["products"]["tires"]["tire"] as $tire){
