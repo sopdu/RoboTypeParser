@@ -208,7 +208,11 @@ class parserRobotyre{
         }
         return $result;
     }
-
+    private function seveImg($robotyre_id){
+        $img = $_SERVER["DOCUMENT_ROOT"] . '/crm-robotyre/ils_images/tmp/'.$robotyre_id.'.jpg';
+        file_put_contents($img, file_get_contents('https://crm.robotyre.ru/Api/ProductImage/'.$robotyre_id));
+        return CFile::MakeFileArray($img);
+    }
     /**
      * @param $type
      * @param $robotyre_id
@@ -400,12 +404,21 @@ class parserRobotyre{
             if ($data["@presence"] != $itemSite["PROPERTY"]["STATUS"]) {
                 $propertyArray["STATUS"] = $data["@presence"];
             }
+            if(empty($itemSite["DETAIL_PICTURE"])){
+                $adding = [
+                    "ACTIVE"            => $active,
+                    "PROPERTY_VALUES"   => $propertyArray
+                ];
+            } else {
+                $adding = [
+                    "ACTIVE"            => $active,
+                    "DETAIL_PICTURE"    =>  $this->seveImg($data["@id"]),
+                    "PROPERTY_VALUES"   => $propertyArray
+                ];
+            }
             $element->Update(
                 $itemSite["ID"],
-                [
-                    "ACTIVE" => $active,
-                    "PROPERTY_VALUES" => $propertyArray
-                ]
+                $adding
             );
             $this->Log($itemSite["ID"], 'изменен товар в '.date('d-m-Y H:i:s'));
         }
