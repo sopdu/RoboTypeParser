@@ -2,6 +2,8 @@
 ini_set('error_reporting', E_ALL);
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
+set_time_limit(300);
+// max_execution_time = 300
 
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.php");
 
@@ -162,7 +164,7 @@ class parserRobotyre{
                 'GetProducts',
                 [
                     "token" => $this->getKey(),
-                    "date"  => date('d.m.Y H:i:s', strtotime('now -2 hour'))
+                    "date"  => date('d.m.Y H:i:s', strtotime('now -1 hour'))
                 ],
                 false
             )["id"]
@@ -182,9 +184,9 @@ class parserRobotyre{
         );
         if($zapros["message"] == 'Запрос в обработке'){
             sleep(15);
-            $this->getItem();
+            $this->getItems();
         }
-        return$zapros;
+        return $zapros;
     }
 
     /**
@@ -256,7 +258,8 @@ class parserRobotyre{
                 "PROPERTY_MODEL",
                 "PROPERTY_CODE_PROVIDER",
                 "PROPERTY_MARK_UP_ID",
-                "PROPERTY_PROVIDER"
+                "PROPERTY_PROVIDER",
+                "PROPERTY_sid"
             ];
         } else {
             $iblock = 3;
@@ -284,14 +287,16 @@ class parserRobotyre{
                 "PROPERTY_UPDATE",
                 "PROPERTY_CODE_PROVIDER",
                 "PROPERTY_MARK_UP_ID",
-                "PROPERTY_PROVIDER"
+                "PROPERTY_PROVIDER",
+                "PROPERTY_sid"
             ];
         }
         $zapros = CIBlockElement::GetList(
             [],
             [
                 "IBLOCK_ID"             =>  $iblock,
-                "PROPERTY_ROBOTYRE_ID"  =>  $robotyre_id
+                "PROPERTY_ROBOTYRE_ID"  =>  $robotyre_id,
+                //"!PROPERTY_sid"         =>  $this->tableGet('sid')
             ],
             false,
             false,
@@ -331,7 +336,8 @@ class parserRobotyre{
                         "MODEL"         =>  $row["PROPERTY_MODEL_VALUE"],
                         "CODE_PROVIDER" =>  $row["PROPERTY_CODE_PROVIDER_VALUE"],
                         "MARK_UP_ID"    =>  $row["PROPERTY_MARK_UP_ID_VALUE"],
-                        "PROVIDER"      =>  $row["PROPERTY_PROVIDER_VALUE"]
+                        "PROVIDER"      =>  $row["PROPERTY_PROVIDER_VALUE"],
+                        "sid"           =>  $row["PROPERTY_sid_VALUE"]
                     ]
                 ];
             } else {
@@ -362,11 +368,13 @@ class parserRobotyre{
                         "UPDATE"        =>  $this->getProperty($type, $row["PROPERTY_UPDATE_VALUE"]),
                         "CODE_PROVIDER" =>  $row["PROPERTY_CODE_PROVIDER_VALUE"],
                         "MARK_UP_ID"    =>  $row["PROPERTY_MARK_UP_ID_VALUE"],
-                        "PROVIDER"      =>  $row["PROPERTY_PROVIDER_VALUE"]
+                        "PROVIDER"      =>  $row["PROPERTY_PROVIDER_VALUE"],
+                        "sid"           =>  $row["PROPERTY_sid_VALUE"]
                     ]
                 ];
             }
         }
+        echo '<pre>'; print_r($result); '</pre>';
         return $result;
     }
 
@@ -375,10 +383,11 @@ class parserRobotyre{
      * @param $data
      */
     private function updateItem($type, $data){
-        $element = new CIBlockElement;
-        $product = new CCatalogProduct();
         $itemSite = $this->getItem($type, $data["@id"]);
-        if(!empty($itemSite)) {
+        if(!empty($itemSite) || $itemSite["PROPERTY"]["sid"] != $this->tableGet('sid')) {
+            CModule::IncludeModule("catalog");
+            $element = new CIBlockElement;
+            $product = new CCatalogProduct();
             $propertyArray = $itemSite["PROPERTY"];
             if ($data["@quantity"] != $itemSite["PROPERTY"]["AVAILABLE"]) {
                 if ($data["@quantity"] >= 2) {
@@ -410,6 +419,7 @@ class parserRobotyre{
             if ($data["@presence"] != $itemSite["PROPERTY"]["STATUS"]) {
                 $propertyArray["STATUS"] = $data["@presence"];
             }
+            $propertyArray["sid"] = $this->tableGet('sid');
             if(empty($itemSite["DETAIL_PICTURE"])){
                 $adding = [
                     "ACTIVE"            => $active,
@@ -430,6 +440,11 @@ class parserRobotyre{
         }
         return;
     }
+
+    /**
+     * @param $time
+     * @return false|string
+     */
     private function timeCalculation($time){
         return date('d.m.Y H:i:s', strtotime('now +1 hour', strtotime($time)));
     }
@@ -438,31 +453,22 @@ class parserRobotyre{
      *
      */
     public function main(){
-        if(empty($this->tableGet('start'))){
-            echo 'N<br />';
-        } else {
-            echo '<pre>'; print_r($this->tableGet('start')); '</pre>';
-            echo '<pre>'; print_r(date($this->timeCalculation($this->tableGet('start')))); '</pre>';
+        //$this->tableDB();
+        if(strtotime(date('d.m.Y H:i:s')) > strtotime(date($this->timeCalculation($this->tableGet('start'))))){
+            $this->tableDrop("sid");
+            $this->tableDrop('start');
+            $this->tableAdd('start', 'NOW()');
+            $this->tableDrop('robotare_zapros');
+            $this->createZapros();
+            $this->tableAdd('sid', md5(date('d.m.Y H:i:s')));
         }
-
-    //  date('d.m.Y H:i:s', strtotime("+3 hours", strtotime($date)));
-
-        //$this->tableDrop('start');
-        //$this->tableAdd('start', 'NOW()');
-
-
-        //foreach ($this->getItems()["products"]["tires"]["tire"] as $tire){
-            //echo '<pre>'; print_r($tire); '</pre>';
-            //if($tire["@id"] == 111341){
-                //$this->updateItem('tire', $tire);
-            //}
-       // }
-        /*
+        foreach ($this->getItems()["products"]["tires"]["tire"] as $tire){
+            $this->updateItem('tire', $tire);
+        }
         foreach ($this->getItems()["products"]["disks"]["disk"] as $disk){
-
+            $this->updateItem('disk', $disk);
         }
-        */
-        echo '<br />main test';
+
         return;
     }
 }
