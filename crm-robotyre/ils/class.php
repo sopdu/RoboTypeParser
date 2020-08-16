@@ -126,7 +126,8 @@ class parserRobotyre{
             'Authorization',
             [
                 "login" => "info@rabbit-wheels.ru",
-                "password" => "Yura-640005"
+                //"password" => "Yura-640005"
+                "password" => "RabbitWheels6405"
             ],
             'token'
         );
@@ -208,6 +209,11 @@ class parserRobotyre{
         }
         return $result;
     }
+
+    /**
+     * @param $robotyre_id
+     * @return array|bool|null
+     */
     private function seveImg($robotyre_id){
         $img = $_SERVER["DOCUMENT_ROOT"] . '/crm-robotyre/ils_images/tmp/'.$robotyre_id.'.jpg';
         file_put_contents($img, file_get_contents('https://crm.robotyre.ru/Api/ProductImage/'.$robotyre_id));
@@ -424,12 +430,24 @@ class parserRobotyre{
         }
         return;
     }
+    private function timeCalculation($time){
+        return date('d.m.Y H:i:s', strtotime('now +1 hour', strtotime($time)));
+    }
 
     /**
      *
      */
     public function main(){
-        $this->tableDrop('start');
+        if(empty($this->tableGet('start'))){
+            echo 'N<br />';
+        } else {
+            echo '<pre>'; print_r($this->tableGet('start')); '</pre>';
+            echo '<pre>'; print_r(date($this->timeCalculation($this->tableGet('start')))); '</pre>';
+        }
+
+    //  date('d.m.Y H:i:s', strtotime("+3 hours", strtotime($date)));
+
+        //$this->tableDrop('start');
         //$this->tableAdd('start', 'NOW()');
 
 
@@ -444,7 +462,7 @@ class parserRobotyre{
 
         }
         */
-        echo 'main test';
+        echo '<br />main test';
         return;
     }
 }
